@@ -3,11 +3,11 @@
 ## Autoscript ORM
 ### Description 
 Autoscript is a lite TypeScript ORM for [PostgreSQL](https://www.npmjs.com/package/pg). </br>
-NPM Link: [https://www.npmjs.com/package/autoscript](https://www.npmjs.com/package/autoscript)
+NPM Link: [https://www.npmjs.com/package/autoscriptorm](https://www.npmjs.com/package/autoscriptorm)
 
 ### Installation
 ```
-npm i autoscript
+npm i autoscriptorm
 ```
 
 ### Prerequisite & Rules

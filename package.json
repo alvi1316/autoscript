@@ -1,5 +1,5 @@
 {
-  "name": "autoscript",
+  "name": "autoscriptorm",
   "version": "1.0.0",
   "description": "A Typescript ORM for PostgreSQL",
   "license": "ISC",
