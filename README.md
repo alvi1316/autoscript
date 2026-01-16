@@ -1,5 +1,4 @@
-<img src ="https://img.shields.io/badge/TypeScript-v5.9.3-blue"/> 
-<img src ="https://img.shields.io/badge/PG-v8.17.1-red"/>
+<img src ="https://img.shields.io/badge/TypeScript-v5.9.3-blue"/> <img src ="https://img.shields.io/badge/PG-v8.17.1-red"/>
 
 ## Autoscript ORM
 ### Description 
