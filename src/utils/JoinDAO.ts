@@ -31,6 +31,8 @@ type ColWithTablePrefix<
     T extends DTOType
 > = keyof (L["length"] extends 1?TablePrefix<T,1>:T)
 
+export type AnyJoinDAO = JoinDAO<any, any, any, any>
+
 export class JoinDAO<T extends DTOType, TDTO extends DTO<T>, R extends string, L extends any[] = [TDTO]> {
 
     private query = ""
@@ -64,7 +66,7 @@ export class JoinDAO<T extends DTOType, TDTO extends DTO<T>, R extends string, L
     }
 
     private varNameToColumn(col: string, dtoList: any[]) {
-        let match = col.match(/^table(\d+)\.(.+$)/)
+        let match = col.match(/^table(\d+)\.([a-zA-Z0-9._-]+)$/)
         if(match) {
             let index = match[1]
             let varName = match[2]
@@ -170,8 +172,9 @@ export class JoinDAO<T extends DTOType, TDTO extends DTO<T>, R extends string, L
         return this
     }
 
-    public orderBy(column: ColWithTablePrefix<L, T> | R, sort: "ASC" | "DESC" = "ASC") {
-        this.orderArray.push(`${column as string} ${sort}`)
+    public orderBy(column: ColWithTablePrefix<L, T>, sort: "ASC" | "DESC" = "ASC") {
+        let columnName = this.varNameToColumn(column as string, this.dtoList)
+        this.orderArray.push(`${columnName} ${sort}`)
         return this
     }
 

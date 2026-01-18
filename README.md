@@ -66,7 +66,7 @@ main()
 
 #### For virtual columns `computedVarToCol` can be used to map column and expression
 
-#### Here is an example of how to create a `DTO`
+#### Here is an example of how to create a `DTO`:
 
 ```typescript
 export type DummyDTOType = DTOType & {
@@ -121,7 +121,7 @@ export class DummyDTO extends DTO<DummyDTOType> {
 
 #### `TableDAO` class is responsible for crud operation. So, after creating the `DTO` class it is recommanded to create a `DAO` class for that table. 
 
-#### Here is an example of how to create a `DAO`
+#### Here is an example of how to create a `DAO`:
 
 ```typescript
 import { DummyDTO, type DummyDTOType } from "./Dummy1DTO.ts"
@@ -134,7 +134,7 @@ export class DummyDAO extends DAO<DummyDTOType, DummyDTO> {
 }
 ```
 
-#### Here is an example of how to use the `DAO` class
+#### Here is an example of how to use the `DAO` class:
 
 ```typescript
 import { configureDB } from 'autoscript'
@@ -228,19 +228,19 @@ async function main() {
 main()
 ```
 
-#### For join operation `JoinDAO` class needs to be used. This class can be used to perform `innerJoin`, `leftJoin`, `rightJoin` and `where` operations. Also virtual columns can be added based on multiple tables. Here is an example
+#### For join operation `JoinDAO` class needs to be used. This class can be used to perform `innerJoin`, `leftJoin`, `rightJoin` and `where` operations. Also virtual columns can be added based on multiple tables. Here is an example:
 
 ```typescript
     import { configureDB } from 'autoscript'
 
     let result = await new JoinDAO(new Dummy1DAO())
-        .innerJoin(new Dummy2DAO(), "table1_name1", "table2_name2")
-        .leftJoin(new Dummy3DAO(), "table2_name2", "table3_name3")
-        .rightJoin(new Dummy4DAO(), "table4_name4", "table3_name3")
-        .addComputedColumn("col1", "CONCAT(table1_name1, table2_name2)")
-        .where("table1_name1", "=", "potato")
+        .innerJoin(new Dummy2DAO(), "table1.name1", "table2.name2")
+        .leftJoin(new Dummy3DAO(), "table2.name2", "table3.name3")
+        .rightJoin(new Dummy4DAO(), "table4.name4", "table3.name3")
+        .addComputedColumn("col1", "CONCAT(table1.name1, table2.name2)")
+        .where("table1.name1", "=", "potato")
         .and()
-        .where("table2_name2", "=", "tomato")
+        .where("table2.name2", "=", "tomato")
         .execute()
 
     if(result!=null) {
@@ -251,6 +251,34 @@ main()
                 e[2].getAsObject(), //Dummy3DTO
                 e[3].getAsObject(), //Dummy4DTO
                 e[4] //Record<"col1", any>
+            )
+        })
+    }
+```
+
+#### If in any case execute cannot be called instantly, `AnyJoinDAO` type will be needed to chain methods later. But this cause typescript from tracking types. Here is an example:
+
+```typescript
+    import { type AnyJoinDAO, configureDB } from 'autoscript'
+
+    let joinDAO: AnyJoinDAO = new JoinDAO(new Dummy1DAO())
+        .innerJoin(new Dummy2DAO(), "table1.name1", "table2.name2")
+    
+    if(/*SomeLogic*/) {
+        joinDAO = joinDAO
+            .leftJoin(new Dummy3DAO(), "table2.name2", "table3.name3")
+            .rightJoin(new Dummy4DAO(), "table4.name4", "table3.name3")        
+    }
+
+    result = await joinDAO.execute()
+
+    if(result!=null) {
+        result.map(e => {
+            console.log(
+                (e[0] as Dummy1DTO).getAsObject(),
+                (e[1] as Dummy2DTO).getAsObject(),
+                (e[2] as Dummy3DTO).getAsObject(),
+                (e[3] as Dummy4DTO).getAsObject()
             )
         })
     }
