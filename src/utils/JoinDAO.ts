@@ -3,7 +3,7 @@ import query from "./Query.js"
 import { DAO } from "./DAO.js"
 
 type TablePrefix<T, N extends number> = {
-    [K in keyof T as `table${N}_${K & string}`]: T[K]
+    [K in keyof T as `table${N}.${K & string}`]: T[K]
 }
 
 type Join<
@@ -63,15 +63,28 @@ export class JoinDAO<T extends DTOType, TDTO extends DTO<T>, R extends string, L
         queryParams.forEach(e => this.params.push(e))
     }
 
+    private varNameToColumn(col: string, dtoList: any[]) {
+        let match = col.match(/^table(\d+)\.(.+$)/)
+        if(match) {
+            let index = match[1]
+            let varName = match[2]
+            let colName = dtoList[Number.parseInt(index)].varToCol[varName]
+            return `table${index}_${colName}`
+        }
+        return col
+    }
+
     public innerJoin<T1 extends DTOType, TDTO1 extends DTO<T1>>(
         dao: DAO<T1, TDTO1>, 
         onCol1: ColType<L, T, T1>, 
         onCol2: ColType<L, T, T1>
     ) {
         this.dtoList.push(dao.dto)
+        let columnName1 = this.varNameToColumn(onCol1 as string, this.dtoList)
+        let columnName2 = this.varNameToColumn(onCol2 as string, this.dtoList)
         this.dtoTypeList.push(dao.dtoType)
         let {queryText, queryParams} = dao.queryBuilder(`table${this.dtoList.length}`, undefined, undefined, true)
-        this.query += ` INNER JOIN (${queryText}) as t${this.dtoList.length} ON ${onCol1 as string} = ${onCol2 as string} `
+        this.query += ` INNER JOIN (${queryText}) as t${this.dtoList.length} ON ${columnName1} = ${columnName2} `
         queryParams.forEach(e => this.params.push(e))
         return this as Join<T, TDTO, T1, TDTO1, R, L>
     }
@@ -82,9 +95,11 @@ export class JoinDAO<T extends DTOType, TDTO extends DTO<T>, R extends string, L
         onCol2: ColType<L, T, T1>
     ) {
         this.dtoList.push(dao.dto)
+        let columnName1 = this.varNameToColumn(onCol1 as string, this.dtoList)
+        let columnName2 = this.varNameToColumn(onCol2 as string, this.dtoList)
         this.dtoTypeList.push(dao.dtoType)
         let {queryText, queryParams} = dao.queryBuilder(`table${this.dtoList.length}`, undefined, undefined, true)
-        this.query += ` LEFT JOIN (${queryText}) as t${this.dtoList.length} ON ${onCol1 as string} = ${onCol2 as string} `
+        this.query += ` LEFT JOIN (${queryText}) as t${this.dtoList.length} ON ${columnName1} = ${columnName2} `
         queryParams.forEach(e => this.params.push(e))
         return this as Join<T, TDTO, T1, TDTO1, R, L>
     }
@@ -95,15 +110,17 @@ export class JoinDAO<T extends DTOType, TDTO extends DTO<T>, R extends string, L
         onCol2: ColType<L, T, T1>
     ) {
         this.dtoList.push(dao.dto)
+        let columnName1 = this.varNameToColumn(onCol1 as string, this.dtoList)
+        let columnName2 = this.varNameToColumn(onCol2 as string, this.dtoList)
         this.dtoTypeList.push(dao.dtoType)
         let {queryText, queryParams} = dao.queryBuilder(`table${this.dtoList.length}`, undefined, undefined, true)
-        this.query += ` RIGHT JOIN (${queryText}) as t${this.dtoList.length} ON ${onCol1 as string} = ${onCol2 as string} `
+        this.query += ` RIGHT JOIN (${queryText}) as t${this.dtoList.length} ON ${columnName1} = ${columnName2} `
         queryParams.forEach(e => this.params.push(e))
         return this as Join<T, TDTO, T1, TDTO1, R, L>
     }
 
     public addComputedColumn<R1 extends R>(column: R1, ...expression: Array<ColWithTablePrefix<L, T> | (string & {})>) {
-        this.computedColumn[column] = expression.join("")
+        this.computedColumn[column] = expression.map(e => this.varNameToColumn(e as string, this.dtoList)).join("")
         return this as JoinDAO<T, TDTO, R&R1, L>
     }
 
@@ -113,6 +130,7 @@ export class JoinDAO<T extends DTOType, TDTO extends DTO<T>, R extends string, L
         value?: string | number | boolean | Date | null | (string | number | boolean | Date)[]
     ) {
 
+        let columnName = this.varNameToColumn(column as string, this.dtoList)
         if (operator === "in" || operator === "not in") {
             if (!Array.isArray(value)) {
                 console.warn(`Invalid value for '${operator}' operator`);
@@ -123,13 +141,13 @@ export class JoinDAO<T extends DTOType, TDTO extends DTO<T>, R extends string, L
                 return this
             }
             const placeholders = value.map(() => `$`).join(", ")
-            const condition = `${column as string} ${operator} (${placeholders})`
+            const condition = `${columnName as string} ${operator} (${placeholders})`
             this.whereArray.push({ condition, params: value as any[] })
             return this
         }
 
         if(operator === "is null" || operator === "is not null") {
-            this.whereArray.push({ condition: `${column as string} ${operator}`, params: [] })
+            this.whereArray.push({ condition: `${columnName as string} ${operator}`, params: [] })
             return this
         }
 
@@ -138,7 +156,7 @@ export class JoinDAO<T extends DTOType, TDTO extends DTO<T>, R extends string, L
             return this
         }
         
-        this.whereArray.push({ condition: `${column as string} ${operator} $ `, params: [value] })
+        this.whereArray.push({ condition: `${columnName as string} ${operator} $ `, params: [value] })
         return this;
 
     }
