@@ -53,6 +53,7 @@ export class JoinDAO<T extends DTOType, TDTO extends DTO<T>, R extends string, L
         this.dtoTypeList = []
         this.whereArray = []
         this.orderArray = []
+        this.computedColumn = {} as any
         this.limitValue = 100
         this.offsetValue = 0
     }
@@ -70,7 +71,7 @@ export class JoinDAO<T extends DTOType, TDTO extends DTO<T>, R extends string, L
         if(match) {
             let index = match[1]
             let varName = match[2]
-            let colName = dtoList[Number.parseInt(index)].varToCol[varName]
+            let colName = dtoList[Number.parseInt(index)-1].varToCol[varName]
             return `table${index}_${colName}`
         }
         return col
