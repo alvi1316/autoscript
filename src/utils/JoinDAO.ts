@@ -42,6 +42,7 @@ export class JoinDAO<T extends DTOType, TDTO extends DTO<T>, R extends string, L
 
     protected whereArray: { condition: string, params: any[] }[] = [];
     protected orderArray: string[] = []
+    protected distinctArray: string[] = []
     protected limitValue:  number | undefined = undefined
     protected offsetValue: number | undefined = undefined
     protected computedColumn: Record<R, string> = {} as Record<R, string>
@@ -52,6 +53,7 @@ export class JoinDAO<T extends DTOType, TDTO extends DTO<T>, R extends string, L
         this.dtoList = []
         this.dtoTypeList = []
         this.whereArray = []
+        this.distinctArray = []
         this.orderArray = []
         this.computedColumn = {} as any
         this.limitValue = 100
@@ -127,6 +129,13 @@ export class JoinDAO<T extends DTOType, TDTO extends DTO<T>, R extends string, L
         return this as JoinDAO<T, TDTO, R&R1, L>
     }
 
+    public distinct(column: ColWithTablePrefix<L, T>[]) {
+        this.distinctArray = column.map(e => {
+            return this.varNameToColumn(e as string, this.dtoList)
+        })
+        return this
+    }
+
     public where(
         column: ColWithTablePrefix<L, T>,
         operator: "=" | "!=" | "<>" | "<" | ">" | "<=" | ">=" | "like" | "in" | "not in" | "is null" | "is not null",
@@ -191,7 +200,12 @@ export class JoinDAO<T extends DTOType, TDTO extends DTO<T>, R extends string, L
 
     public queryBuilder(limit?: number, offset?: number) {
 
-        let selectString = `SELECT ${["*", ...Object.entries(this.computedColumn).map(([k, v]) => `${v} as ${k}`)].join(", ")} FROM `
+        let distinctColumnString = ""
+        if(this.distinctArray.length != 0) {
+            distinctColumnString = `DISTINCT ON (${this.distinctArray.join(", ")})`
+        }
+
+        let selectString = `SELECT ${distinctColumnString} ${["*", ...Object.entries(this.computedColumn).map(([k, v]) => `${v} as ${k}`)].join(", ")} FROM `
 
         let whereClauses: string[] = []
         

@@ -8,6 +8,7 @@ export class DAO<T extends DTOType, TDTO extends DTO<T>> {
     protected _dto
     protected whereArray: { condition: string, params: any[] }[] = [];
     protected orderArray: string[] = []
+    protected distinctArray: string[] = []
     protected limitValue: number | undefined = undefined
     protected offsetValue: number | undefined = undefined
 
@@ -27,8 +28,20 @@ export class DAO<T extends DTOType, TDTO extends DTO<T>> {
     protected resetQueryClauses() {
         this.whereArray = []
         this.orderArray = []
+        this.distinctArray = []
         this.limitValue = undefined
         this.offsetValue = undefined
+    }
+
+    public distinct(field: (keyof T)[]) {
+        this.distinctArray = field.map((e: keyof T) => {
+            let colName = this.dto.varToCol[e]
+            if(e in this.dto.computedVarToCol) {
+                colName = (this.dto.computedVarToCol as any)[e]
+            }
+            return colName
+        })
+        return this
     }
 
     public where(
@@ -140,6 +153,11 @@ export class DAO<T extends DTOType, TDTO extends DTO<T>> {
             ].join(", ")
         }
 
+        let distinctColumnString = ""
+        if(this.distinctArray.length != 0) {
+            distinctColumnString = `DISTINCT ON (${this.distinctArray.join(", ")})`
+        }
+
         if(this.limitValue == undefined) {
             this.limitValue = limit
         }
@@ -152,7 +170,7 @@ export class DAO<T extends DTOType, TDTO extends DTO<T>> {
 
         let orderString = this.orderArray.length > 0 ? ` ORDER BY ${this.orderArray.join(", ")} ` : ""
                 
-        let queryText = `SELECT ${columnString} FROM ${this.dto.tableName} ${whereString} ${orderString} ${limitString} ${offsetString}`
+        let queryText = `SELECT ${distinctColumnString} ${columnString} FROM ${this.dto.tableName} ${whereString} ${orderString} ${limitString} ${offsetString}`
 
         return {queryText: queryText, queryParams: queryParams}
         
